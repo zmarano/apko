@@ -75,7 +75,7 @@ func ReadGroupFile(fsys fs.FS, filePath string) (GroupFile, error) {
 	return gf, nil
 }
 
-// Load loads an /etc/passwd file into a GroupFile from an io.Reader.
+// Load loads an /etc/group file into a GroupFile from an io.Reader.
 func (gf *GroupFile) Load(r io.Reader) error {
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -95,7 +95,7 @@ func (gf *GroupFile) Load(r io.Reader) error {
 	return nil
 }
 
-// WriteFile writes an /etc/passwd file from a GroupFile.
+// WriteFile writes an /etc/group file from a GroupFile.
 func (gf *GroupFile) WriteFile(fsys apkfs.FullFS, filePath string) error {
 	file, err := fsys.Create(filePath)
 	if err != nil {
@@ -106,7 +106,7 @@ func (gf *GroupFile) WriteFile(fsys apkfs.FullFS, filePath string) error {
 	return gf.Write(file)
 }
 
-// Write writes an /etc/passwd file into an io.Writer.
+// Write writes an /etc/group file into an io.Writer.
 func (gf *GroupFile) Write(w io.Writer) error {
 	for _, ge := range gf.Entries {
 		if err := ge.Write(w); err != nil {

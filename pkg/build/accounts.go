@@ -60,6 +60,22 @@ func userToUserEntry(user types.User) passwd.UserEntry {
 	}
 }
 
+func appendShadow(shadow []passwd.ShadowEntry, user types.User) []passwd.ShadowEntry {
+	// format user:*:20160::::::
+	se := passwd.ShadowEntry{
+		UserName:         user.UserName,
+		EncPassword:      "*",
+		LastChanged:      "20160",
+		MinPassAge:       "",
+		MaxPassAge:       "",
+		WarnPeriod:       "",
+		InactivityPeriod: "",
+		AcctExpiry:       "",
+	}
+
+	return append(shadow, se)
+}
+
 func mutateAccounts(fsys apkfs.FullFS, ic *types.ImageConfiguration) error {
 	var eg errgroup.Group
 
@@ -84,6 +100,26 @@ func mutateAccounts(fsys apkfs.FullFS, ic *types.ImageConfiguration) error {
 			return nil
 		})
 	}
+
+	// Mutate the /etc/shadow file
+	eg.Go(func() error {
+		path := filepath.Join("etc", "shadow")
+
+		sf, err := passwd.ReadOrCreateShadowFile(fsys, path)
+		if err != nil {
+			return err
+		}
+
+		for _, u := range ic.Accounts.Users {
+			sf.Entries = appendShadow(sf.Entries, u)
+		}
+
+		if err := sf.WriteFile(fsys, path); err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	// Mutate the /etc/passwd file
 	eg.Go(func() error {
